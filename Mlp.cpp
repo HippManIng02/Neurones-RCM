@@ -4,32 +4,42 @@
 #include <algorithm>
 #include "Mlp.h"
 
+MLP::~MLP(){
+    delete[] weights_input_hidden;
+    delete[] weights_output_hidden;
+    delete[] bias_hidden;
+    delete[] bias_output;
+}
 
-MLP::MLP(int inputSize, int hiddenSize, int outputSize)
+MLP::MLP(uint inputSize, uint hiddenSize, uint outputSize)
+: inputSize(inputSize), hiddenSize(hiddenSize), outputSize(outputSize)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_real_distribution<float> dist(-0.01, 0.01);
 
+    //Allocation des poids et des biais
+    weights_input_hidden = new float[hiddenSize * inputSize];
+    weights_output_hidden = new float[outputSize * hiddenSize];
+    bias_hidden = new float[hiddenSize];
+    bias_output = new float[outputSize];
+
     //Initialisation des poids et biais pour la couche cachée
-    weights_input_hidden.resize(hiddenSize, std::vector<float>(inputSize));
-    for(auto& row : weights_input_hidden){
-        for(auto& weight : row){
-            weight = dist(gen);
+    for(uint i=0; i< hiddenSize; i++){
+        bias_hidden[i] = 0.0f;
+        for(uint j=0;j<inputSize; j++){
+            weights_input_hidden[i*inputSize +j] = dist(gen);
         }
     }
-
-    bias_hidden.resize(hiddenSize, 0.0f);
 
     //Initialisation des poids et biais pour la couche de sortie
-    weights_output_hidden.resize(outputSize, std::vector<float>(hiddenSize));
-    for(auto& row : weights_output_hidden){
-        for(auto& weight : row){
-            weight = dist(gen);
+    for(uint i=0; i< outputSize; i++){
+        bias_output[i] = 0.0f;
+        for(uint j=0;j<hiddenSize; j++){
+            weights_output_hidden[i*hiddenSize +j] = dist(gen);
         }
     }
-
-    bias_output.resize(outputSize, 0.0f);
+   
 }
 
 //Fonction d'activation ReLu
@@ -57,23 +67,23 @@ std::vector<float> MLP::softmax(const std::vector<float>& z) const{
 std::vector<float> MLP::forward(const std::vector<float>& inputs)
 {
     //couche cachée
-    std::vector<float> hiddenL;
-    for(unsigned long i=0; i < weights_input_hidden.size(); i++){
+    std::vector<float> hiddenL(hiddenSize, 0.0f);
+    for(unsigned long i=0; i < hiddenSize; i++){
         float z = bias_hidden[i];
         for(unsigned long j=0; j < inputs.size(); j++){
-            z += inputs[j] * weights_input_hidden[i][j];
+            z += inputs[j] * weights_input_hidden[i * inputSize + j];
         }
-        hiddenL.push_back(relu(z));
+        hiddenL[i] = relu(z);
     }
 
     //Couche sortie
-    std::vector<float> outputL;
-    for(unsigned long i =0; i < weights_output_hidden.size(); i++){
+    std::vector<float> outputL(outputSize, 0.0f);;
+    for(unsigned long i =0; i < outputSize; i++){
         float z = bias_output[i];
-        for(unsigned long j = 0; j < hiddenL.size(); j++){
-            z += hiddenL[j] * weights_output_hidden[i][j];
+        for(unsigned long j = 0; j < hiddenSize; j++){
+            z += hiddenL[j] * weights_output_hidden[i * hiddenSize + j];
         }
-        outputL.push_back(z);
+        outputL[i] = z;
     }
 
     return softmax(outputL);
