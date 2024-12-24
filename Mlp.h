@@ -9,18 +9,22 @@
 
 class MLP{
 private:
+    uint inputSize;
+    uint hiddenSize;
+    uint outputSize;
     // poids et biais de la couche d'entrée à la couche cachée
-    std::vector<std::vector<float>> weights_input_hidden;
-    std::vector<float> bias_hidden;
-
+    float *weights_input_hidden;
+    float *bias_hidden;
     // Poids et biais de la couche cachée à la couche de sortie
-    std::vector<std::vector<float>> weights_output_hidden;
-    std::vector<float> bias_output;
+    float *weights_output_hidden;
+    float *bias_output;
 
 
 public:
     //Constructeur
-    MLP(int inputSize, int hiddenSize, int outputSize = 10);
+    MLP(uint inputSize, uint hiddenSize, uint outputSize = 10);
+    //Destructeur
+    ~MLP();
 
     //Propagation avant
     std::vector<float> forward(const std::vector<float>& inputs);
