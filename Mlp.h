@@ -27,6 +27,7 @@ public:
     ~MLP();
 
     //Propagation avant
+    std::vector<float> forward(const std::vector<float>& inputs, std::vector<float>& hiddenL);
     std::vector<float> forward(const std::vector<float>& inputs);
 
     //Fonction d'activation pour la couche cachée
@@ -34,6 +35,9 @@ public:
 
     //Fonction d'ativation softmax pour la couche de sortie
     std::vector<float> softmax(const std::vector<float>& z) const;
+
+    // Fonction d'entrainement basée sur l'algorithme de rétropropagation
+    void train(const std::vector<std::vector<float>>& trainingData, const std::vector<int>& labels, float learningRate, int epochs);
 
 };
 
