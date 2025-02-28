@@ -5,9 +5,12 @@
 
 
 #define BEGIN 0
-#define MAX_TRAIN 100
+#define MAX_TRAIN 1000
 #define SIZE 784
-#define HIDDEN_L_SIZE 128 
+#define HIDDEN_L_SIZE 128
+#define OUTPUT_SIZE 10
+#define TRAININGRATE 0.001
+#define EPOCHS 50
 
 int main(){
     //Ouverture des fichiers MNIST (images et labels)
@@ -42,33 +45,39 @@ int main(){
         return EXIT_FAILURE;
     }
 
-    //Initialisation du réseau de neurone : entrée(784); neurones(128); sorties(10)
-    MLP mlp(SIZE, HIDDEN_L_SIZE, 10);
+    // Les données d'entraînement
+    std::vector<std::vector<float>> trainingData(MAX_TRAIN, std::vector<float>(SIZE));
+    std::vector<int> trainingLabels(MAX_TRAIN);
 
-    std::cout<<"Entrainement du réseau de neurone."<<std::endl;
-    //Propagation avant sur chaque image : forward propagation
     for(int i = 0; i < MAX_TRAIN; i++){
-        //Convertion de l'image de uint8_t(0-255) à  un vecteur de float (0-1)
-        std::vector<float> imageFormat(SIZE);
-        for(int j =0; j < SIZE; j++ ){
-            imageFormat[j] = images[i * SIZE + j] / 255.0f;
+        for(int j = 0; j < SIZE; j++){
+            trainingData[i][j] = images[i* SIZE + j] / 255.0f;//Convertion de l'image de uint8_t(0-255) à  un vecteur de float (0-1)
         }
-
-        //Propagation avant
-        std::vector<float> output = mlp.forward(imageFormat);
-        //Récuppération de la valeur prédicte
-        auto maxIt = std::max_element(output.begin(), output.end());
-        int predictLabel = std::distance(output.begin(), maxIt);
-
-        //Affichage de la valeur prédicte et de la valeur réel
-        printf("Label réel=%d; Label prédict = %d\n ", *(labels+i), predictLabel);
-        std::cout<<"*****************************************"<<std::endl;
-     }
+        trainingLabels[i] = labels[i];
+    }
     
     free(images);
     free(labels);
     fclose(imageFile);
     fclose(labelFile);
+
+    //Initialisation du réseau de neurone : entrée(784); neurones(128); sorties(10)
+    MLP mlp(SIZE, HIDDEN_L_SIZE, OUTPUT_SIZE);
+
+    std::cout<<"Entrainement du réseau de neurone."<<std::endl;
+    mlp.train(trainingData, trainingLabels, TRAININGRATE, EPOCHS);
+
+    std::cout<< "Test de prédiction après entrainement."<<std::endl;
+    for(int i=0; i < 10; i++){
+        std::vector<float> output = mlp.forward(trainingData[i]);
+        //Récuppération de la valeur prédicte
+        auto maxIt = std::max_element(output.begin(), output.end());
+        int predictLabel = std::distance(output.begin(), maxIt);
+
+        //Affichage de la valeur prédicte et de la valeur réel
+        printf("Label réel=%d; Label prédict = %d\n ", trainingLabels[i], predictLabel);
+        std::cout<<"*****************************************"<<std::endl;
+    }
 
     return EXIT_SUCCESS;
 }
